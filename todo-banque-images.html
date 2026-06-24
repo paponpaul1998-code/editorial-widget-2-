@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alimentation banque d'image</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #111111;
+    color: #e8e8e8;
+    padding: 28px 28px 32px;
+    min-height: 100vh;
+  }
+
+  #header {
+    margin-bottom: 6px;
+    padding-bottom: 8px;
+  }
+
+  #title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 5px;
+  }
+
+  #title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    font-weight: 400;
+    color: #f0f0f0;
+    letter-spacing: -0.01em;
+  }
+
+  #edit-btn {
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+    border: 0.5px solid #2a2a2a;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.12s;
+    flex-shrink: 0;
+  }
+
+  #edit-btn:hover {
+    background: #1e1e1e;
+    border-color: #3a3a3a;
+  }
+
+  #edit-btn:hover svg path { stroke: #888; }
+
+  #subtitle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  #subtitle-label {
+    font-size: 12px;
+    font-weight: 300;
+    color: #666;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  #progress-label {
+    font-size: 11px;
+    color: #444;
+    font-weight: 400;
+  }
+
+  #progress-bar-track {
+    height: 1.5px;
+    background: #222;
+    margin-top: 8px;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  #progress-bar-fill {
+    height: 100%;
+    background: #c8b89a;
+    border-radius: 2px;
+    transition: width 0.3s ease;
+  }
+
+  #task-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .task-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 7px 0;
+    border-radius: 6px;
+    border: 0.5px solid transparent;
+    transition: background 0.12s, border-color 0.12s, opacity 0.12s;
+    user-select: none;
+    position: relative;
+  }
+
+  .task-row:hover {
+    background: #1a1a1a;
+    border-color: #2a2a2a;
+    padding: 7px 8px;
+    margin: 0 -8px;
+    width: calc(100% + 16px);
+  }
+
+  .task-row.completing {
+    opacity: 0;
+    transform: translateX(10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+
+  .task-row.dragging {
+    opacity: 0.35;
+  }
+
+  .task-row.drag-over {
+    border-color: #c8b89a44;
+    background: #1a1a1a;
+  }
+
+  .drag-handle {
+    position: absolute;
+    left: -16px;
+    display: flex;
+    align-items: center;
+    cursor: grab;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.12s;
+    padding: 2px 0;
+  }
+
+  .task-row:hover .drag-handle { opacity: 1; }
+  .drag-handle:active { cursor: grabbing; }
+
+  .checkbox {
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    border: 1px solid #3a3a3a;
+    background: transparent;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+
+  .checkbox.checked {
+    background: #c8b89a;
+    border-color: #c8b89a;
+  }
+
+  .checkmark { display: none; }
+  .checkbox.checked .checkmark { display: block; }
+
+  .task-label {
+    font-size: 14px;
+    font-weight: 300;
+    color: #d0d0d0;
+    flex: 1;
+    line-height: 1.4;
+    letter-spacing: 0.01em;
+  }
+
+  button {
+    font-size: 11px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    padding: 5px 14px;
+    border-radius: 4px;
+    border: 0.5px solid #2e2e2e;
+    background: transparent;
+    color: #555;
+    cursor: pointer;
+    transition: all 0.12s;
+    text-transform: uppercase;
+  }
+
+  button:hover {
+    background: #1e1e1e;
+    color: #888;
+    border-color: #3a3a3a;
+  }
+
+  .task-inline-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    border-bottom: 0.5px solid #c8b89a;
+    color: #d0d0d0;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    letter-spacing: 0.01em;
+    outline: none;
+    padding: 0 0 1px 0;
+  }
+
+  .task-inline-input::placeholder { color: #444; }
+
+  .delete-btn {
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: #3a3a3a;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: color 0.12s;
+  }
+
+  .delete-btn:hover { color: #888; background: transparent; border: none; }
+
+  #empty-state {
+    display: none;
+    text-align: center;
+    padding: 24px 0 8px;
+    font-size: 12px;
+    color: #333;
+    font-weight: 300;
+    letter-spacing: 0.03em;
+  }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div id="title-row">
+    <div id="title">Alimentation banque d'image</div>
+    <button id="edit-btn" onclick="addTask()" title="Ajouter une tâche">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1V11M1 6H11" stroke="#555" stroke-width="1.4" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+  <div id="subtitle-row">
+    <span id="subtitle-label">Suivi des sujets</span>
+    <span id="progress-label"></span>
+  </div>
+  <div id="progress-bar-track">
+    <div id="progress-bar-fill" style="width:0%"></div>
+  </div>
+</div>
+
+<div id="task-list"></div>
+<div id="empty-state">Toutes les tâches sont complétées ✦</div>
+
+<script>
+const DEFAULT_TASKS = ["Sujet 1","Sujet 2","Sujet 3"];
+const STORAGE_KEY = "banque_images_todo_v1";
+
+function load() {
+  try { const r = localStorage.getItem(STORAGE_KEY); return r ? JSON.parse(r) : null; }
+  catch(e) { return null; }
+}
+
+function save(data) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
+}
+
+let state;
+
+function init() {
+  const stored = load();
+  if (stored) {
+    state = { tasks: stored.tasks || [...DEFAULT_TASKS] };
+  } else {
+    state = { tasks: [...DEFAULT_TASKS] };
+  }
+  save(state);
+  render();
+}
+
+function render() {
+  const total = state.tasks.length;
+  document.getElementById("progress-label").textContent = total + " sujet" + (total > 1 ? "s" : "");
+  document.getElementById("progress-bar-fill").style.width = "0%";
+
+  const list = document.getElementById("task-list");
+  const empty = document.getElementById("empty-state");
+  list.innerHTML = "";
+
+  if (total === 0) {
+    empty.style.display = "block";
+    return;
+  }
+  empty.style.display = "none";
+
+  state.tasks.forEach((task, i) => {
+    const row = document.createElement("div");
+    row.className = "task-row";
+    row.draggable = true;
+    row.dataset.index = i;
+
+    const handle = document.createElement("div");
+    handle.className = "drag-handle";
+    handle.innerHTML = '<svg width="8" height="12" viewBox="0 0 8 12" fill="none"><circle cx="2" cy="2" r="1" fill="#555"/><circle cx="6" cy="2" r="1" fill="#555"/><circle cx="2" cy="6" r="1" fill="#555"/><circle cx="6" cy="6" r="1" fill="#555"/><circle cx="2" cy="10" r="1" fill="#555"/><circle cx="6" cy="10" r="1" fill="#555"/></svg>';
+
+    const cb = document.createElement("div");
+    cb.className = "checkbox";
+    cb.innerHTML = '<svg class="checkmark" width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.2 5.8L8 1" stroke="#111" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    cb.addEventListener("click", (e) => {
+      e.stopPropagation();
+      cb.classList.add("checked");
+      row.classList.add("completing");
+      setTimeout(() => {
+        state.tasks.splice(i, 1);
+        save(state);
+        render();
+      }, 300);
+    });
+
+    const label = document.createElement("span");
+    label.className = "task-label";
+    label.textContent = task;
+    label.addEventListener("click", (e) => {
+      e.stopPropagation();
+      startInlineEdit(row, i, label);
+    });
+
+    const del = document.createElement("button");
+    del.className = "delete-btn";
+    del.title = "Supprimer";
+    del.innerHTML = '<svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1 1L9 9M9 1L1 9" stroke="#3a3a3a" stroke-width="1.2" stroke-linecap="round"/></svg>';
+    del.addEventListener("click", (e) => {
+      e.stopPropagation();
+      state.tasks.splice(i, 1);
+      save(state);
+      render();
+    });
+
+    row.addEventListener("dragstart", (e) => {
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", i);
+      setTimeout(() => row.classList.add("dragging"), 0);
+    });
+    row.addEventListener("dragend", () => {
+      row.classList.remove("dragging");
+      document.querySelectorAll(".task-row").forEach(r => r.classList.remove("drag-over"));
+    });
+    row.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      document.querySelectorAll(".task-row").forEach(r => r.classList.remove("drag-over"));
+      row.classList.add("drag-over");
+    });
+    row.addEventListener("dragleave", () => row.classList.remove("drag-over"));
+    row.addEventListener("drop", (e) => {
+      e.preventDefault();
+      const from = parseInt(e.dataTransfer.getData("text/plain"));
+      const to = i;
+      if (from === to) return;
+      const [t] = state.tasks.splice(from, 1);
+      state.tasks.splice(to, 0, t);
+      save(state);
+      render();
+    });
+
+    row.appendChild(handle);
+    row.appendChild(cb);
+    row.appendChild(label);
+    row.appendChild(del);
+    list.appendChild(row);
+  });
+}
+
+function startInlineEdit(row, i, label) {
+  const input = document.createElement("input");
+  input.className = "task-inline-input";
+  input.value = state.tasks[i];
+  input.placeholder = "Nom du sujet";
+  row.replaceChild(input, label);
+  input.focus();
+  input.select();
+
+  function commit() {
+    const val = input.value.trim() || state.tasks[i];
+    state.tasks[i] = val;
+    save(state);
+    render();
+  }
+
+  input.addEventListener("blur", commit);
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { input.blur(); }
+    if (e.key === "Escape") { input.removeEventListener("blur", commit); render(); }
+  });
+}
+
+function addTask() {
+  state.tasks.push("Nouveau sujet");
+  save(state);
+  render();
+  const rows = document.querySelectorAll(".task-row");
+  const lastRow = rows[rows.length - 1];
+  if (lastRow) {
+    const label = lastRow.querySelector(".task-label");
+    if (label) startInlineEdit(lastRow, state.tasks.length - 1, label);
+  }
+}
+
+init();
+</script>
+</body>
+</html>
